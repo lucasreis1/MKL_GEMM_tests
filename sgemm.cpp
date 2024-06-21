@@ -136,9 +136,8 @@ int main(int argc, char *argv[]) {
   auto time = dur.count() / 1e9;
 
   printf("sgemm , M = %lld N = %lld K = %lld , GFlops = %lf , GB/s = %lf , "
-         "execution_time_with_casting = %lf s\n",
-         m, n, k, gflops * nreps / time, gbytes * nreps / time,
-         (dur + casting_dur).count() / 1e9);
+         "execution_time = %lf s\n",
+         m, n, k, gflops * nreps / time, gbytes * nreps / time, time);
 
   /*       Print output data                                     */
 #ifdef DEBUG

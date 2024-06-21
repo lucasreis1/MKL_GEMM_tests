@@ -97,9 +97,6 @@ int main(int argc, char *argv[]) {
       b[i * ldb + j] =
           f2h(static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20));
 
-  auto casting_dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::high_resolution_clock::now() - start_casting);
-
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < n; ++j)
       c[i * ldc + j] =
@@ -108,8 +105,8 @@ int main(int argc, char *argv[]) {
   alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
   beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> start_casting;
-  start_casting = std::chrono::high_resolution_clock::now();
+  auto casting_dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::high_resolution_clock::now() - start_casting);
 
   /*      Call SGEMM subroutine ( C Interface )                  */
 
