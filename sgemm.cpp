@@ -25,12 +25,22 @@ int main(int argc, char *argv[]) {
   n = std::atoi(argv[2]);
   k = std::atoi(argv[3]);
 
+#ifndef MEASURE_ERROR
   /*        Number of repetitions                                 */
 
   int nreps = 1;
   if (argc == 5)
     nreps = std::atoi(argv[4]);
   nreps = nreps ? nreps : 1;
+#else
+  char *outputFile = argv[4];
+  FILE *outputFD = fopen(outputFile, "wb");
+
+  if (!outputFD) {
+    fprintf(stderr, "Failed to open output file\n");
+    return 1;
+  }
+#endif
 
   /*       Get input data                                        */
 
@@ -82,25 +92,56 @@ int main(int argc, char *argv[]) {
   /*              Get random numbers for A, B & C                */
   srand(static_cast<unsigned>(0xDEADBEEF));
 
+#ifndef RANDOM_INPUTS
+  /*              Realistic weights extracted from YOLO           */
+  int weights_size;
+  float * weights = readFromFile("weights.bin", &weights_size);
+  if (!weights) {
+    fprintf(stderr, "Failed to open weights file\n");
+    mkl_free(a);
+    mkl_free(b);
+    mkl_free(c);
+    return 1;
+  }
+
   /*              Count casting time                            */
   std::chrono::time_point<std::chrono::high_resolution_clock> start_casting;
   start_casting = std::chrono::high_resolution_clock::now();
 
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < k; ++j)
-      a[i * lda + j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
+      a[i * lda + j] = weights [ (i * lda + j) % weights_size ];
 
   for (int i = 0; i < k; ++i)
     for (int j = 0; j < n; ++j)
-      b[i * ldb + j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
+      b[i * ldb + j] = weights [ ( i * ldb + j ) % weights_size ];
 
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < n; ++j)
-      c[i * ldc + j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
+      c[i * ldc + j] = weights [ ( i * ldc + j ) % weights_size ];
 
-  alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
-  beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
-  
+  free(weights);
+#else
+  /*              Count casting time                            */
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_casting;
+  start_casting = std::chrono::high_resolution_clock::now();
+
+  for (int i = 0; i < m; ++i)
+    for (int j = 0; j < k; ++j)
+      a[i * lda + j] = static_cast<float>(rand() * 10) / static_cast<float>(RAND_MAX);
+
+  for (int i = 0; i < k; ++i)
+    for (int j = 0; j < n; ++j)
+      b[i * ldb + j] = static_cast<float>(rand() * 10) / static_cast<float>(RAND_MAX);
+
+  for (int i = 0; i < m; ++i)
+    for (int j = 0; j < n; ++j)
+      c[i * ldc + j] = static_cast<float>(rand() * 10) / static_cast<float>(RAND_MAX);
+#endif
+
+  alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 10);
+  beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 10);
+
   auto casting_dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start_casting);
 
@@ -119,6 +160,8 @@ int main(int argc, char *argv[]) {
   double gbytes = (sizeof(float) * m * k + sizeof(float) * k * n + sizeof(float) * m * n) /
                   1e9;
 
+
+#ifndef MEASURE_ERROR
   /*                    WARM-UP EXECUTIONS                    */
   for (int count = 0 ; count < 4 ; ++count)
     cblas_sgemm(layout, transA, transB, m, n, k, alpha,
@@ -139,6 +182,27 @@ int main(int argc, char *argv[]) {
          "execution_time = %lf s\n",
          m, n, k, gflops * nreps / time, gbytes * nreps / time, time);
 
+#else
+    cblas_sgemm(layout, transA, transB, m, n, k, alpha,
+                  a, lda, b, ldb, beta, c, ldc);
+ 
+    // Store the result of the C matrix in an output file
+
+    // First, write the size of each element in the binary file
+    fputc(sizeof(float), outputFD);
+    /* 
+     * Then, write the type of element:
+     * |  0 - FLOAT/DOUBLE (refer to size) 
+     * |  1 - FLOAT_16
+     * |  2 - INT
+    */
+    fputc(0, outputFD);
+
+    // write all elements of the output array
+    fwrite(c, sizeof(float), m * n, outputFD);
+
+    fclose(outputFD);
+#endif
   /*       Print output data                                     */
 #ifdef DEBUG
   printf("================ C OUTPUT ================\n");

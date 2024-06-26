@@ -11,6 +11,8 @@ float h2f(MKL_F16 x);
 
 void printMatrix(float *M, int m, int n);
 
+float * readFromFile(const char *fileName, int *size);
+
 #ifdef __cplusplus
 }
 #endif

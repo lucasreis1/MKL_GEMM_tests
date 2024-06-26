@@ -36,3 +36,10 @@ build/
 
 # compile_commands
 compile_commands.json
+.cache
+xeon_gold_6252
+xeon_platinum_8481C
+xeon_silver_4208
+output_files/.cache
+output_files/plots
+*.bin

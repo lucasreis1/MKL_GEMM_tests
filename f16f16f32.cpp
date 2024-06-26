@@ -26,12 +26,22 @@ int main(int argc, char *argv[]) {
   n = std::atoi(argv[2]);
   k = std::atoi(argv[3]);
 
-  /*        Number of repetitions                                 */
 
+#ifndef MEASURE_ERROR
+  /*        Number of repetitions                                 */
   int nreps = 1;
   if (argc == 5)
     nreps = std::atoi(argv[4]);
   nreps = nreps ? nreps : 1;
+#else
+  char *outputFile = argv[4];
+  FILE *outputFD = fopen(outputFile, "wb");
+
+  if (!outputFD) {
+    fprintf(stderr, "Failed to open output file\n");
+    return 1;
+  }
+#endif
 
   /*       Get input data                                        */
 
@@ -80,8 +90,15 @@ int main(int argc, char *argv[]) {
     ldc = rmaxc;
   }
 
+
+
   /*              Get random numbers for A, B & C                */
   srand(static_cast<unsigned>(0xDEADBEEF));
+
+#ifndef RANDOM_INPUTS
+  /*              Realistic weights extracted from YOLO           */
+  int weights_size;
+  float * weights = readFromFile("weights.bin", &weights_size);
 
   /*              Count casting time                            */
   std::chrono::time_point<std::chrono::high_resolution_clock> start_casting;
@@ -90,23 +107,45 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < k; ++j)
       a[i * lda + j] =
-          f2h(static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20));
+          f2h(weights[ (i * lda + j) % weights_size ]);
 
   for (int i = 0; i < k; ++i)
     for (int j = 0; j < n; ++j)
       b[i * ldb + j] =
-          f2h(static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20));
+          f2h(weights [ (i * ldb + j) % weights_size ]);
+
+  for (int i = 0; i < m; ++i)
+    for (int j = 0; j < n; ++j)
+      c[i * ldc + j] = weights [ (i * ldc + j) % weights_size  ];
+
+  free(weights);
+#else
+  /*              Count casting time                            */
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_casting;
+  start_casting = std::chrono::high_resolution_clock::now();
+
+  for (int i = 0; i < m; ++i)
+    for (int j = 0; j < k; ++j)
+      a[i * lda + j] =
+          f2h(static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX));
+
+  for (int i = 0; i < k; ++i)
+    for (int j = 0; j < n; ++j)
+      b[i * ldb + j] =
+          f2h(static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX));
 
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < n; ++j)
       c[i * ldc + j] =
-          static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
+          f2h(static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX));
+#endif
 
-  alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
-  beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 20);
+  alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 10);
+  beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 10);
 
   auto casting_dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start_casting);
+
 
   /*      Call SGEMM subroutine ( C Interface )                  */
 
@@ -122,6 +161,7 @@ int main(int argc, char *argv[]) {
    *                /                    \   /                     \   /                    \ */
   double gbytes = (sizeof(MKL_F16) * m * k + sizeof(MKL_F16) * k * n + sizeof(float) * m * n) / 1e9;
 
+#ifndef MEASURE_ERROR
   /*                    WARM-UP EXECUTIONS                    */
   for (int count = 0; count < 4; ++count)
     cblas_gemm_f16f16f32(layout, transA, transB, m, n, k, alpha, a, lda, b, ldb,
@@ -138,6 +178,32 @@ int main(int argc, char *argv[]) {
   // time in seconds
   auto time = dur.count() / 1e9;
 
+  printf("f16f16f32 , M = %lld N = %lld K = %lld , GFlops = %lf , GB/s = %lf , "
+         "execution_time_with_casting = %lf s\n",
+         m, n, k, gflops * nreps / time, gbytes * nreps / time,
+         (dur + casting_dur).count() / 1e9);
+#else
+    cblas_gemm_f16f16f32(layout, transA, transB, m, n, k, alpha, a, lda, b, ldb,
+                         beta, c, ldc);
+
+    // Store the result of the C matrix in an output file
+
+    // First, write the size of each element in the binary file
+    fputc(sizeof(float), outputFD);
+    /* 
+     * Then, write the type of element:
+     * |  0 - FLOAT/DOUBLE (refer to size) 
+     * |  1 - FLOAT_16
+     * |  2 - INT
+    */
+    fputc(0, outputFD);
+
+    // write all elements of the output array
+    fwrite(c, sizeof(float), m * n, outputFD);
+
+    fclose(outputFD);
+#endif
+
 #ifdef DEBUG
   MKLVersion Version;
   mkl_get_version(&Version);
@@ -149,10 +215,6 @@ int main(int argc, char *argv[]) {
   printf("Platform:                %s\n", Version.Platform);
 #endif
 
-  printf("f16f16f32 , M = %lld N = %lld K = %lld , GFlops = %lf , GB/s = %lf , "
-         "execution_time_with_casting = %lf s\n",
-         m, n, k, gflops * nreps / time, gbytes * nreps / time,
-         (dur + casting_dur).count() / 1e9);
 
   /*       Print output data                                     */
 #ifdef DEBUG

@@ -109,3 +109,32 @@ void printMatrix(float *M, int m, int n) {
     printf("\n");
   }
 }
+
+// read binary sequence of floats from file and store in array
+float * readFromFile(const char *fileName, int *size) {
+  FILE *f = fopen(fileName, "rb");
+  
+  if (!f)
+    return NULL;
+
+  // goto end of file
+  fseek(f, 0L, SEEK_END); 
+
+  // assume the file is always a stream of floats
+  long num_floats = ftell(f) / sizeof(float);
+
+  // return to beginning of file
+  fseek(f, 0L, SEEK_SET);
+
+  float *array = (float *) malloc(num_floats * sizeof(float));
+  if (!array)
+    return NULL;
+
+  if (fread (array, sizeof(float), num_floats, f) != num_floats) {
+    free(array);
+    return NULL;
+  }
+
+  *size = num_floats;
+  return array;
+}
