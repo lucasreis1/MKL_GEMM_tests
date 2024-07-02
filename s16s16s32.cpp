@@ -126,18 +126,18 @@ int main(int argc, char *argv[]) {
   start_casting = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < m; ++i)
       for (int j = 0; j < k; ++j)
-        a[i * lda + j] = static_cast<MKL_INT16>(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 10));
+        a[i * lda + j] = static_cast<MKL_INT16>(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 
     for (int i = 0; i < k; ++i)
       for (int j = 0; j < n; ++j)
-        b[i * ldb + j] = static_cast<MKL_INT16>(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 10));
+        b[i * ldb + j] = static_cast<MKL_INT16>(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 
     for (int i = 0; i < m; ++i)
       for (int j = 0; j < n; ++j)
-        c[i * ldc + j] = static_cast<MKL_INT32>(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 10));
+        c[i * ldc + j] = static_cast<MKL_INT32>(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 #endif
-  alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 10);
-  beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 10);
+  alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 5);
+  beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 5);
 
   auto casting_dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start_casting);

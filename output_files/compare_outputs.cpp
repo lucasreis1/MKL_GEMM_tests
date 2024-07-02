@@ -157,15 +157,19 @@ double RMSE(std::vector<double> &original, std::vector<double> &relaxed) {
 using namespace std;
 
 const vector<string> strvector = {"bf16bf16f32", "f16f16f32", "s8u8s32",
-                                  "s16s16s32",   "hgemm",     "sgemm"};
+                                  "s16s16s32",   "dgemm",     "sgemm"};
 
 int main(int argc, char *argv[]) {
   int type, size;
 
+  if (argc < 2) {
+    fprintf(stderr, "inform size of elements to run benchmark!\n");
+    return 1;
+  }
   const char *matrix_sizes = argv[1];
 
-  char fileName[40];
-  sprintf(fileName, "output_dgemm_%s.bin", matrix_sizes);
+  char fileName[100];
+  sprintf(fileName, "output_hgemm_%s_randominps.bin", matrix_sizes);
 
   auto original = openFile(fileName);
 
@@ -175,7 +179,8 @@ int main(int argc, char *argv[]) {
   }
 
   for (auto bench : strvector) {
-    sprintf(fileName, "output_%s_%s.bin", bench.c_str(), matrix_sizes);
+    sprintf(fileName, "output_%s_%s_randominps.bin", bench.c_str(),
+            matrix_sizes);
 
     std::vector<double> approx = openFile(fileName);
     if (!approx.size()) {
@@ -183,7 +188,8 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    printf("%s,%s,%lf,%lf\n", bench.c_str(), matrix_sizes,
+    printf("%s,%s,%lf,%lf,%lf,%lf\n", bench.c_str(), matrix_sizes,
+           WAPE(original, approx), WIAP(original, approx),
            RMSPE(original, approx), RMSE(original, approx));
   }
 }

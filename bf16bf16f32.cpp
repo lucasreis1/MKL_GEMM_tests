@@ -124,15 +124,15 @@ int main(int argc, char *argv[]) {
   start_casting = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < m; ++i)
       for (int j = 0; j < k; ++j)
-        a[i * lda + j] = f2b(static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 5));
+        a[i * lda + j] = f2b(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 
     for (int i = 0; i < k; ++i)
       for (int j = 0; j < n; ++j)
-        b[i * ldb + j] = f2b(static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 5));
+        b[i * ldb + j] = f2b(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 
     for (int i = 0; i < m; ++i)
       for (int j = 0; j < n; ++j)
-        c[i * ldc + j] = f2b(static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 5));
+        c[i * ldc + j] = f2b(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 #endif
 
   alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 5);

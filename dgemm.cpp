@@ -114,19 +114,19 @@ int main(int argc, char *argv[]) {
 #else
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < k; ++j)
-      a[i * lda + j] = static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX);
+      a[i * lda + j] = static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5);
 
   for (int i = 0; i < k; ++i)
     for (int j = 0; j < n; ++j)
-      b[i * ldb + j] = static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX);
+      b[i * ldb + j] = static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5);
 
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < n; ++j)
-      c[i * ldc + j] = static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX);
+      c[i * ldc + j] = static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5);
 #endif
 
-  alpha = static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 10);
-  beta = static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 10);
+  alpha = static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5);
+  beta = static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5);
 
   /*      Call SGEMM subroutine ( C Interface )                  */
 

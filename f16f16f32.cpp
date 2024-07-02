@@ -127,21 +127,21 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < k; ++j)
       a[i * lda + j] =
-          f2h(static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX));
+          f2h(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 
   for (int i = 0; i < k; ++i)
     for (int j = 0; j < n; ++j)
       b[i * ldb + j] =
-          f2h(static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX));
+          f2h(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < n; ++j)
       c[i * ldc + j] =
-          f2h(static_cast<double>(rand() * 10) / static_cast<double>(RAND_MAX));
+          f2h(static_cast<double>(rand()) / static_cast<double>(RAND_MAX / 5));
 #endif
 
-  alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 10);
-  beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 10);
+  alpha = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 5);
+  beta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX / 5);
 
   auto casting_dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start_casting);
